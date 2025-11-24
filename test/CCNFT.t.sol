@@ -5,25 +5,43 @@ import {Test} from "forge-std/Test.sol";
 import {BUSD} from "../src/BUSD.sol";
 import {CCNFT} from "../src/CCNFT.sol";
 
+import {DeployBUSD} from "../script/DeployBUSD.s.sol";
+import {DeployCCNFT} from "../script/DeployCCNFT.s.sol";
+
 // Definición del contrato de prueba CCNFTTest que hereda de Test. 
 // Declaración de direcciones y dos instancias de contratos (BUSD y CCNFT).
 contract CCNFTTest is Test {
-    address deployer;
+    //address deployer;
+    DeployCCNFT deployer;
+    //address busd;
+    DeployBUSD busdDeployer;
     address c1;
     address c2;
     address funds;
     address fees;
-    BUSD busd;
+    
     CCNFT ccnft;
+    BUSD busd;
 
 // Ejecución antes de cada prueba. 
 // Inicializar las direcciones y desplgar las instancias de BUSD y CCNFT.
     function setUp() public {
+        // Despliega el contrato CCNFT
+        deployer = new DeployCCNFT();
+        // Garantizar que el contrato se despliegue correctamente
+        ccnft = deployer.run();
+
+        // Despliega el contrato BUSD
+        busdDeployer = new DeployBUSD();
+        // Garantizar que el contrato se despliegue correctamente
+        busd = busdDeployer.run();
     }
 
 // Prueba de "setFundsCollector" del contrato CCNFT. 
 // Llamar al método y despues verificar que el valor se haya establecido correctamente.
     function testSetFundsCollector() public {
+        ccnft.setFundsCollector(funds);
+        assertEq(ccnft.fundsCollector(), funds);
     }
 
 // Prueba de "setFeesCollector" del contrato CCNFT
