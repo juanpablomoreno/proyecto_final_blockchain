@@ -1,32 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-/* import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol"; */
-
 import {
     ERC721
-} from "lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {
     ERC721Enumerable
-} from "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {
     IERC20
-} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
     IERC721
-} from "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {
     Counters
-} from "lib/openzeppelin-contracts/contracts/utils/Counters.sol";
-import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+} from "@openzeppelin/contracts/utils/Counters.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {
     ReentrancyGuard
-} from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
@@ -103,7 +96,7 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     IERC20 public fundsToken;
 
 // Constructor (nombre y símbolo del NFT).    
-    constructor() () {
+    constructor() ERC721("CryptoCampo NFT", "CCNFT") {
     }
 
     // PUBLIC FUNCTIONS
