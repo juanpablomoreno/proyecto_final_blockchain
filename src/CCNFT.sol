@@ -10,31 +10,31 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
-//EVENTOS
-// indexed: Permiten realizar búsquedas en los registros de eventos.
+    //EVENTOS
+    // indexed: Permiten realizar búsquedas en los registros de eventos.
 
-// Compra NFTs
+    // Compra NFTs
     event Buy(address indexed buyer, uint256 indexed tokenId, uint256 value); 
-// buyer: La dirección del comprador.
-// tokenId: El ID único del NFT comprado.
-// value: El valor asociado al NFT comprado.
+    // buyer: La dirección del comprador.
+    // tokenId: El ID único del NFT comprado.
+    // value: El valor asociado al NFT comprado.
 
-// Reclamamo NFTs.
-    event Claim();
-// claimer: La dirección del usuario que reclama los NFTs.
-// tokenId: El ID único del NFT reclamado.
+    // Reclamamo NFTs.
+    event Claim(address indexed claimer, uint256 indexed tokenId);
+    // claimer: La dirección del usuario que reclama los NFTs.
+    // tokenId: El ID único del NFT reclamado.
 
-// Transferencia de NFT de un usuario a otro.
-    event Trade();
-// buyer: La dirección del comprador del NFT.
-// seller: La dirección del vendedor del NFT.
-// tokenId: El ID único del NFT que se transfiere.
-// value: El valor pagado por el comprador al vendedor por el NFT (No indexed).
+    // Transferencia de NFT de un usuario a otro.
+    event Trade(addresss indexed buyer, address indexed seller, uint256 indexed tokenId, uint256 value);
+    // buyer: La dirección del comprador del NFT.
+    // seller: La dirección del vendedor del NFT.
+    // tokenId: El ID único del NFT que se transfiere.
+    // value: El valor pagado por el comprador al vendedor por el NFT (No indexed).
 
-// Venta de un NFT.
-    event PutOnSale();
-// tokenId: El ID único del NFT que se pone en venta.
-// price: El precio al cual se pone en venta el NFT (No indexed).
+    // Venta de un NFT.
+    event PutOnSale(uint256 indexed tokenId, uint256 price);
+    // tokenId: El ID único del NFT que se pone en venta.
+    // price: El precio al cual se pone en venta el NFT (No indexed).
 
     // Estructura del estado de venta de un NFT.
     struct TokenSale {
@@ -91,10 +91,9 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
 
     // PUBLIC FUNCTIONS
 
-// Funcion de compra de NFTs. 
-
-// Parametro value: El valor de cada NFT que se está comprando.
-// Parametro amount: La cantidad de NFTs que se quieren comprar.
+    // Funcion de compra de NFTs. 
+    // Parametro value: El valor de cada NFT que se está comprando.
+    // Parametro amount: La cantidad de NFTs que se quieren comprar.
     function buy(uint256 value, uint16 amount) external nonReentrant {
         // Verificación de permisos de la compra con "canBuy". Incluir un mensaje de falla.
         require(canBuy == false, "Buying is disabled");
