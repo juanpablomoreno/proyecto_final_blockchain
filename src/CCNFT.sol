@@ -226,21 +226,21 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     // Utilización del token ERC20 para transacciones.
     function setFundsToken(address token) external onlyOwner { // Parámetro, token: Que va a ser la Dirección del contrato del token ERC20.
         // La dirección no puede ser la dirección cero (address(0)). Incluir un mensaje de falla.
-        require(address(0) == token, "Invalid token address"); 
+        require(token != address(0), "Invalid token address"); 
         fundsToken = IERC20(token); // Contrato ERC20 a variable fundsToken.
     }
 
     // Dirección para colectar los fondos de las ventas de NFTs.
     function setFundsCollector(address _address) external onlyOwner { // Parámetro, dirección de colector de fondos.
         // La dirección no puede ser la dirección cero (address(0))
-        require(address(0) == _address, "Invalid funds collector address");
+        require(_address != address(0), "Invalid funds collector address");
         fundsCollector = _address; // Dirección proporcionada a la variable fundsCollector.
     }
 
     // Dirección para colectar las tarifas de transacción.
     function setFeesCollector(address _address) external onlyOwner { // Parámetro, dirección del colector de tarifas.
         // La dirección no puede ser la dirección cero (address(0))
-        require(address(0) == _address, "Invalid fees collector address"); 
+        require(_address != address(0), "Invalid fees collector address"); 
         feesCollector = _address; // Dirección proporcionada a la variable feesCollector.
     }
 

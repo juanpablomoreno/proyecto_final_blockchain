@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 import {BUSD} from "../src/BUSD.sol";
 import {CCNFT} from "../src/CCNFT.sol";
 
@@ -11,14 +11,11 @@ import {DeployCCNFT} from "../script/DeployCCNFT.s.sol";
 // Definición del contrato de prueba CCNFTTest que hereda de Test. 
 // Declaración de direcciones y dos instancias de contratos (BUSD y CCNFT).
 contract CCNFTTest is Test {
-    //address deployer;
-    DeployCCNFT deployer;
-    //address busd;
-    DeployBUSD busdDeployer;
-    address c1;
-    address c2;
-    address funds;
-    address fees;
+    address deployer = address(1);
+    address c1 = address(2);
+    address c2  = address(3);
+    address funds = address(4);
+    address fees = address(5);
     
     CCNFT ccnft;
     BUSD busd;
@@ -26,15 +23,18 @@ contract CCNFTTest is Test {
 // Ejecución antes de cada prueba. 
 // Inicializar las direcciones y desplgar las instancias de BUSD y CCNFT.
     function setUp() public {
+        busd = new BUSD();
+        ccnft = new CCNFT();
+
         // Despliega el contrato CCNFT
-        deployer = new DeployCCNFT();
+        //deployer = new DeployCCNFT();
         // Garantizar que el contrato se despliegue correctamente
-        ccnft = deployer.run();
+        //ccnft = deployer.run();
 
         // Despliega el contrato BUSD
-        busdDeployer = new DeployBUSD();
+        //busdDeployer = new DeployBUSD();
         // Garantizar que el contrato se despliegue correctamente
-        busd = busdDeployer.run();
+        //busd = busdDeployer.run();
     }
 
 // Prueba de "setFundsCollector" del contrato CCNFT. 
@@ -47,6 +47,8 @@ contract CCNFTTest is Test {
 // Prueba de "setFeesCollector" del contrato CCNFT
 // Verificar que el valor se haya establecido correctamente.
     function testSetFeesCollector() public {
+        ccnft.setFeesCollector(fees);
+        assertEq(ccnft.feesCollector(), fees);
     }
 
 // Prueba de "setProfitToPay" del contrato CCNFT
