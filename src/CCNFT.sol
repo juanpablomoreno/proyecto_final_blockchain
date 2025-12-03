@@ -85,6 +85,22 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
 
     // Constructor (nombre y símbolo del NFT).    
     constructor() ERC721("CryptoCampo NFT", "CCNFT") {
+        // Inicialización de direcciones
+        fundsToken = IERC20(0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7); // Dirección del contrato BUSD en Testnet.
+        fundsCollector = address(0); // Dirección inicial del colector de fondos.
+        feesCollector = address(0); // Dirección inicial del colector de tarifas.
+
+        // Inicialización de variables de control
+        canBuy = false; // Inicialmente, las compras de NFTs están deshabilitadas.
+        canClaim = false; // Inicialmente, las reclamaciones de NFTs están deshabilitadas.
+        canTrade = false; // Inicialmente, las transferencias de NFTs están deshabilitadas.
+        totalValue = 0; // Inicialmente, el valor total acumulado es 0.
+        maxValueToRaise = 1000000 * 10 ** 18; // Valor máximo a recaudar (1 millón de tokens, considerando 18 decimales).
+        buyFee = 100; // Tarifa de compra inicial (1%).
+        tradeFee = 100; // Tarifa de transferencia inicial (1%).
+        maxBatchCount = 10; // Límite inicial de NFTs por operación.
+        profitToPay = 500; // Porcentaje inicial de beneficio a pagar en reclamaciones (5%).
+                
         tokenIdTracker.reset(); // Inicialización del contador de IDs de NFTs.
         tokenIdTracker.increment(); // Iniciamos el contador en 1 (los IDs de los NFTs comienzan desde 1).
     }
@@ -96,13 +112,13 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     // Parametro amount: La cantidad de NFTs que se quieren comprar.
     function buy(uint256 value, uint16 amount) external nonReentrant {
         // Verificación de permisos de la compra con "canBuy". Incluir un mensaje de falla.
-        require(canBuy == false, "Buying is disabled");
+        require(canBuy == true, "Buying is disabled");
         // Verificacón de la cantidad de NFTs a comprar sea mayor que 0 y menor o igual al máximo permitido (maxBatchCount). Incluir un mensaje de falla.
-        require(amount == 0 || amount > maxBatchCount, "Invalid amount to buy");
+        require(amount > 0 && amount <= maxBatchCount, "Invalid amount to buy");
         // Verificación del valor especificado para los NFTs según los valores permitidos en validValues. Incluir un mensaje de falla.
-        require(value == 0 || validValues[value] == false, "Invalid value to buy"); 
+        require(validValues[value] == true, "Invalid value to buy"); 
         // Verificacón del valor total después de la compra (no debe exeder el valor máximo permitido "maxValueToRaise"). Incluir un mensaje de falla.
-        require(((value * amount) + totalValue) > maxValueToRaise, "Max value to raise exceeded");
+        require(((value * amount) + totalValue) <= maxValueToRaise, "Max value to raise exceeded");
 
         totalValue += (value * amount); // Incremento del valor total acumulado por el valor de los NFTs comprados.
 
@@ -130,9 +146,9 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     // Parámetros: Lista de IDs de tokens de reclamo (utilizar calldata).
     function claim(uint256[] calldata listTokenId) external nonReentrant {
         // Verificacón habilitación de "reclamo" (canClaim). Incluir un mensaje de falla.
-        require(canClaim == false, "Claiming is disabled");
+        require(canClaim == true, "Claiming is disabled");
         // Verificacón de la cantidad de tokens a reclamar (mayor que 0 y menor o igual a maxBatchCount). Incluir un mensaje de falla.
-        require(listTokenId.length == 0 || listTokenId.length > maxBatchCount, "Invalid amount to claim");
+        require(listTokenId.length > 0 && listTokenId.length <= maxBatchCount, "Invalid amount to claim");
 
         // Inicializacion de claimValue a 0.
         uint256 claimValue = 0; 
@@ -142,10 +158,10 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
             uint256 tokenId = listTokenId[i]; // Obtener el tokenId actual de la lista.
 
 			// Verificacón listTokenId[i] exista. Incluir un mensaje de falla.
-            require(_exists(tokenId) == false, "Token ID doesn't exists");
+            require(_exists(tokenId) == true, "Token ID doesn't exists");
             
             // Verificamos que el llamador de la función (_msgSender()) sea el propietario del token. Si no es así, la transacción falla con el mensaje "Only owner can Claim".
-            require(_msgSender() != ownerOf(tokenId), "Only owner can Claim"); // Verificacón que _msgSender()) sea el propietario del token. Incluir un mensaje de falla.
+            require(_msgSender() == ownerOf(tokenId), "Only owner can Claim"); // Verificacón que _msgSender()) sea el propietario del token. Incluir un mensaje de falla.
             claimValue += values[tokenId]; // Suma de el valor del token al claimValue acumulado.
             values[tokenId] = 0; // Reseteo del valor del token a 0.
 
@@ -170,17 +186,17 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     // Funcion de compra de NFT que esta en venta.
     function trade(uint256 tokenId) external nonReentrant { // Parámetro: ID del token.
         // Verificación del comercio de NFTs (canTrade). Incluir un mensaje de falla.
-        require(canTrade == false, "Trade is not allowed");
+        require(canTrade == true, "Trade is not allowed");
         // Verificación de existencia del tokenId (_exists). Incluir un mensaje de falla.
-        require(_exists(tokenId) == false, "Token ID doesn't exists"); 
+        require(_exists(tokenId) == true, "Token ID doesn't exists"); 
         // Verificamos que el comprador (el que llama a la función) no sea el propietario actual del NFT. Si lo es, la transacción falla con el mensaje "Buyer is the Seller".
         // Verificación de propietario actual del NFT no sea el comprador. Incluir un mensaje de falla.
-        require(ownerOf(tokenId) == _msgSender(), "Buyer is the Seller"); 
+        require(ownerOf(tokenId) != _msgSender(), "Buyer is the Seller"); 
 
         TokenSale storage tokenSale = tokensOnSale[tokenId]; // Estado de venta del NFT.
 
         // Verifica que el NFT esté actualmente en venta (onSale es true). Si no lo está, la transacción falla con el mensaje "Token not On Sale".
-        require(tokenSale.onSale == false, "Token not On Sale"); // Verificación del estado de venta (onSale). Incluir un mensaje de falla.
+        require(tokenSale.onSale == true, "Token not On Sale"); // Verificación del estado de venta (onSale). Incluir un mensaje de falla.
 
         // Transferencia del precio de venta del comprador al propietario actual del NFT usando fundsToken.
         if (!fundsToken.transferFrom(_msgSender(), ownerOf(tokenId), tokenSale.price)) {
@@ -204,11 +220,11 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     // Función para poner en venta un NFT.
     function putOnSale(uint256 tokenId, uint256 price) external { // Parámetros: ID y precio del token.
         // Verificación de operaciones de comercio (canTrade). Incluir un mensaje de falla.
-        require(canTrade == false, "Trade is not allowed");
+        require(canTrade == true, "Trade is not allowed");
         // Verificción de existencia del tokenId mediante "_exists". Incluir un mensaje de falla.
-        require(_exists(tokenId), "Token ID doesn't exists");
+        require(_exists(tokenId) == true, "Token ID doesn't exists");
         // Verificción remitente de la transacción es propietario del token. Incluir un mensaje de falla.
-        require(ownerOf(tokenId) != _msgSender(), "Only owner can put On Sale");
+        require(ownerOf(tokenId) == _msgSender(), "Only owner can put On Sale");
 
         TokenSale storage tokenSale = tokensOnSale[tokenId]; // Variable de almacenamiento de datos para el token.
 
@@ -353,4 +369,3 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 }
-
