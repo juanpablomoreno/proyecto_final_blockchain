@@ -173,6 +173,87 @@ contract CCNFTTest is Test {
         ccnft.trade(999);
     }
 
+    // Prueba que la cantidad de tokens a comprar por operacion no exceda el maximo permitido.
+    function testAmountTokensToBuy() public {
+        uint16 maxBatch = 5;
+        uint256 valueOfToken = 100 * 10 ** 18;
+        uint16 amountToBuy = 6;
+
+        vm.startPrank(deployer);
+        ccnft.setCanBuy(true);
+        ccnft.setMaxBatchCount(maxBatch);
+        vm.stopPrank();
+
+        vm.expectRevert(bytes("Invalid amount to buy"));
+        vm.prank(c1);
+        ccnft.buy(valueOfToken, amountToBuy);
+    }
+
+    // Prueba que el valor proporcionado para comprar tokens sea válido.
+    function testInvalidValueToBuy() public {
+        uint256 invalidValueOfToken = 150 * 10 ** 18;
+        uint16 amountToBuy = 2;
+
+        vm.startPrank(deployer);
+        ccnft.setCanBuy(true);
+        ccnft.addValidValues(100 * 10 ** 18);
+        vm.stopPrank();
+
+        vm.expectRevert(bytes("Invalid value to buy"));
+        vm.prank(c1);
+        ccnft.buy(invalidValueOfToken, amountToBuy);
+    }
+
+    // Prueba que el valor total a recaudar no exceda el máximo permitido.
+    function testInvalidValueToRaise() public {
+        uint256 valueOfToken = 20000 * 10 ** 18; // Valor que excede el maximo permitido
+        uint16 amountToBuy = 2;
+
+        vm.startPrank(deployer);
+        ccnft.setCanBuy(true);
+        ccnft.setMaxValueToRaise(10000); // Establecer el maximo valor a recaudar
+        ccnft.addValidValues(20000 * 10 ** 18);
+        vm.stopPrank();
+
+        vm.expectRevert(bytes("Max value to raise exceeded"));
+        vm.prank(c1);
+        ccnft.buy(valueOfToken, amountToBuy);
+    }
+
+    function testBuyerEnoughFunds() public {
+        uint256 valueOfToken = 100 * 10 ** 18;
+        uint16 amountToBuy = 2;
+        uint16 buyFee = 200; // 2%
+
+        // Asignar BUSD a c1
+        vm.prank(deployer);
+        busd.transfer(c1, 150 * 10 ** 18);
+        assertEq(busd.balanceOf(c1), 150 * 10 ** 18);
+
+        // Implementar la prueba de compra
+        vm.prank(c1);
+        busd.approve(address(ccnft), 1000000 * 10 ** 18);
+
+        vm.startPrank(deployer);
+        // Configurar el contrato CCNFT para permitir compras
+        ccnft.setCanBuy(true);
+        // Añadir un valor válido para la compra
+        ccnft.addValidValues(100 * 10 ** 18);
+        // Establecer los colectores de fondos y tarifas
+        ccnft.setFundsCollector(funds);
+        ccnft.setFeesCollector(fees);
+        // Establecer las tarifas de compra y comercio
+        ccnft.setBuyFee(buyFee);
+        vm.stopPrank();
+        
+        //PREGUNTA AL PROFE - porque no retorna el mensaje de error esperado?
+        //vm.expectRevert(bytes("Cannot send funds tokens"));
+        vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
+        vm.prank(c1);
+        ccnft.buy(valueOfToken, amountToBuy);
+    }
+
+    // Prueba del proceso de compra de tokens.
     function testBuy() public {
         uint256 valueOfToken = 100 * 10 ** 18;
         uint16 amountToBuy = 2;
@@ -213,6 +294,50 @@ contract CCNFTTest is Test {
         uint256 fundsCollected = busd.balanceOf(funds);
         console.log("Funds collected:", fundsCollected);
         assertEq(fundsCollected, (amountToBuy * valueOfToken));
+    }
+
+    function testClaim() public {
+        uint256 valueOfToken = 100 * 10 ** 18;
+        uint16 amountToBuy = 2;
+        uint16 buyFee = 200; // 2%
+
+        // Asignar BUSD a c1
+        vm.prank(deployer);
+        busd.transfer(c1, 1000000 * 10 ** 18);
+        assertEq(busd.balanceOf(c1), 1000000 * 10 ** 18);
+
+        // Implementar la prueba de compra
+        vm.prank(c1);
+        busd.approve(address(ccnft), 1000000 * 10 ** 18);
+
+        vm.prank(funds);
+        busd.approve(address(ccnft), 1000000 * 10 ** 18);
+
+        vm.startPrank(deployer);
+        // Configurar el contrato CCNFT para permitir compras
+        ccnft.setCanBuy(true);
+        // Añadir un valor válido para la compra
+        ccnft.addValidValues(100 * 10 ** 18);
+        // Establecer los colectores de fondos y tarifas
+        ccnft.setFundsCollector(funds);
+        ccnft.setFeesCollector(fees);
+        // Establecer las tarifas de compra y comercio
+        ccnft.setBuyFee(buyFee);
+        vm.stopPrank();
+
+        vm.prank(c1);
+        ccnft.buy(valueOfToken, amountToBuy);
+        assertEq(ccnft.balanceOf(c1), amountToBuy);
+
+        uint256[] memory listTokenId = new uint256[](1);
+        listTokenId[0] = 1;
+
+        // Activar la capacidad de reclamar
+        vm.prank(deployer);
+        ccnft.setCanClaim(true);
+        vm.prank(c1);
+        ccnft.claim(listTokenId);
+        assertEq(ccnft.balanceOf(c1), amountToBuy - 1);
     }
 
     function testTrade() public {

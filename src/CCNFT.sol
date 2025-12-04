@@ -153,7 +153,7 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
         uint256 claimValue = 0; 
 
         TokenSale storage tokenSale; // Variable tokenSale.
-        for (uint256 i = 1; i <= listTokenId.length; i++ ) { // Bucle para iterar a través de cada token ID en listTokenId.
+        for (uint256 i = 0; i < listTokenId.length; i++ ) { // Bucle para iterar a través de cada token ID en listTokenId.
             uint256 tokenId = listTokenId[i]; // Obtener el tokenId actual de la lista.
 
 			// Verificacón listTokenId[i] exista. Incluir un mensaje de falla.
@@ -164,7 +164,6 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
             claimValue += values[tokenId]; // Suma de el valor del token al claimValue acumulado.
             values[tokenId] = 0; // Reseteo del valor del token a 0.
 
- 
             tokenSale = tokensOnSale[tokenId]; // Acceso a la información de venta del token
             tokenSale.onSale = false;   // Desactivacion del estado de venta.
             tokenSale.price =  0;       // Desactivacion del estado de venta.
