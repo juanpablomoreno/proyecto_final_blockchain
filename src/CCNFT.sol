@@ -209,7 +209,8 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
   
         emit Trade(_msgSender(), ownerOf(tokenId), tokenId, tokenSale.price); // Registro de dirección del comprador, dirección del vendedor, tokenId, y precio de venta.  
 
-        _safeTransfer(_msgSender(), ownerOf(tokenId), tokenId, ""); // Transferencia del NFT del propietario actual al comprador.
+        //_safeTransfer(_msgSender(), ownerOf(tokenId), tokenId, ""); // Transferencia del NFT del propietario actual al comprador.
+        _safeTransfer(ownerOf(tokenId), _msgSender(), tokenId, ""); // Transferencia del NFT del propietario actual al comprador.
 
         tokenSale.onSale = false;   // NFT no disponible para la venta.
         tokenSale.price =  0;       // Reseteo del precio de venta del NFT.
@@ -327,8 +328,7 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
 
     // Buscar un valor en un array y retornar su índice o la longitud del array si no se encuentra.
     function find(uint256[] memory list, uint256 value) private pure returns(uint)  { // Parámetros, array de enteros en el cual se buscará el valor y valor que se buscará en el array..
-
-        for (uint256 index = 1; index <= list.length; index++) { // Retornar la posición del valor en el array. 
+        for (uint256 index = 0; index < list.length; index++) { // Retornar la posición del valor en el array. 
             if (list[index] == value) {
                 return index; // Si se encuentra, retornar el índice.
             }

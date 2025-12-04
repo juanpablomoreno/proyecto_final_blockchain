@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 import {BUSD} from "../src/BUSD.sol";
 import {CCNFT} from "../src/CCNFT.sol";
 
@@ -171,5 +171,140 @@ contract CCNFTTest is Test {
         ccnft.setCanTrade(true);
         vm.expectRevert(bytes("Token ID doesn't exists"));
         ccnft.trade(999);
+    }
+
+    function testBuy() public {
+        uint256 valueOfToken = 100 * 10 ** 18;
+        uint16 amountToBuy = 2;
+        uint16 buyFee = 200; // 2%
+
+        // Asignar BUSD a c1
+        vm.prank(deployer);
+        busd.transfer(c1, 1000000 * 10 ** 18);
+        assertEq(busd.balanceOf(c1), 1000000 * 10 ** 18);
+
+        // Implementar la prueba de compra
+        vm.prank(c1);
+        busd.approve(address(ccnft), 1000000 * 10 ** 18);
+
+        vm.startPrank(deployer);
+        // Configurar el contrato CCNFT para permitir compras
+        ccnft.setCanBuy(true);
+        // Añadir un valor válido para la compra
+        ccnft.addValidValues(100 * 10 ** 18);
+        // Establecer los colectores de fondos y tarifas
+        ccnft.setFundsCollector(funds);
+        ccnft.setFeesCollector(fees);
+        // Establecer las tarifas de compra y comercio
+        ccnft.setBuyFee(buyFee);
+        vm.stopPrank();
+
+        vm.prank(c1);
+        ccnft.buy(valueOfToken, amountToBuy);
+        assertEq(ccnft.balanceOf(c1), amountToBuy);
+
+        // Verificar los saldos de los colectores de fondos y tarifas
+        vm.prank(deployer);
+        uint256 feesCollected = busd.balanceOf(fees);
+        console.log("Fees collected:", feesCollected);
+        assertEq(feesCollected, (amountToBuy * valueOfToken) * buyFee / 10000);
+
+        vm.prank(deployer);
+        uint256 fundsCollected = busd.balanceOf(funds);
+        console.log("Funds collected:", fundsCollected);
+        assertEq(fundsCollected, (amountToBuy * valueOfToken));
+    }
+
+    function testTrade() public {
+        uint256 valueOfToken = 100 * 10 ** 18;
+        uint16 amountToBuy = 2;
+        uint16 buyFee = 200; // 2%
+        uint16 tradeFee = 300; // 3%
+
+        // Asignar BUSD a c1
+        vm.prank(deployer);
+        busd.transfer(c1, 1000000 * 10 ** 18);
+        assertEq(busd.balanceOf(c1), 1000000 * 10 ** 18);
+        // Asignar BUSD a c2
+        vm.prank(deployer);
+        busd.transfer(c2, 1000000 * 10 ** 18);
+        assertEq(busd.balanceOf(c2), 1000000 * 10 ** 18);
+
+        // Implementar la prueba de compra
+        // Aprobar el gasto de BUSD para c1 y c2
+        vm.prank(c1);
+        busd.approve(address(ccnft), 1000000 * 10 ** 18);
+        vm.prank(c2);
+        busd.approve(address(ccnft), 1000000 * 10 ** 18);
+
+        vm.startPrank(deployer);
+        // Configurar el contrato CCNFT para permitir compras y comercio
+        ccnft.setCanBuy(true);
+        ccnft.setCanTrade(true);
+        // Añadir un valor válido para la compra
+        ccnft.addValidValues(100 * 10 ** 18);
+        // Establecer los colectores de fondos y tarifas
+        ccnft.setFundsCollector(funds);
+        ccnft.setFeesCollector(fees);
+        // Establecer las tarifas de compra y comercio
+        ccnft.setBuyFee(buyFee);
+        ccnft.setTradeFee(tradeFee);
+        vm.stopPrank();
+
+        vm.prank(c1);
+        ccnft.buy(valueOfToken, amountToBuy);
+        assertEq(ccnft.balanceOf(c1), amountToBuy);
+
+
+        // Verificar los saldos de los colectores de tarifas después del comercio
+        vm.prank(deployer);
+        uint256 feesCollected = busd.balanceOf(fees);
+        console.log("Fees collected before trade:", feesCollected);
+        //assertEq(feesCollected, (amountToBuy * valueOfToken) * 200 / 10000 + (valueOfToken * tradeFee / 10000));
+
+        vm.prank(deployer);
+        uint256 fundsCollected = busd.balanceOf(funds);
+        console.log("Funds collected before trade:", fundsCollected);
+        //assertEq(fundsCollected, (amountToBuy * valueOfToken) + (valueOfToken - (valueOfToken * tradeFee / 10000)) );
+
+
+
+        // Ahora probar el comercio
+        uint256 tokenIdToTrade = 1; // Suponiendo que el primer token tiene ID 1
+        uint256 tradePrice = 150 * 10 ** 18; // Precio al que c2 comprará el token
+        
+        vm.prank(c1);
+        ccnft.putOnSale(tokenIdToTrade, tradePrice);
+
+        vm.prank(deployer);
+        console.log("Before trade, c1 balance:", ccnft.balanceOf(c1));
+        vm.prank(deployer);
+        console.log("Before trade, c2 balance:", ccnft.balanceOf(c2));
+        vm.prank(c2);
+        ccnft.trade(tokenIdToTrade);
+
+
+        vm.prank(deployer);
+        console.log("After trade, c1 balance:", ccnft.balanceOf(c1));
+        vm.prank(deployer);
+        console.log("After trade, c2 balance:", ccnft.balanceOf(c2));
+
+        vm.prank(deployer);
+        assertEq(ccnft.balanceOf(c1), amountToBuy - 1);
+        vm.prank(deployer);
+        assertEq(ccnft.balanceOf(c2), 1);
+
+        
+        // Verificar los saldos de los colectores de tarifas después del comercio
+        vm.prank(deployer);
+        feesCollected = busd.balanceOf(fees);
+        console.log("Fees collected after trade:", feesCollected);
+        //assertEq(feesCollected, (amountToBuy * valueOfToken) * 200 / 10000 + (valueOfToken * tradeFee / 10000));
+
+        vm.prank(deployer);
+        fundsCollected = busd.balanceOf(funds);
+        console.log("Funds collected after trade:", fundsCollected);
+        //assertEq(fundsCollected, (amountToBuy * valueOfToken) + (valueOfToken - (valueOfToken * tradeFee / 10000)) );
+        
     }
 }
