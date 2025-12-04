@@ -86,7 +86,7 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     // Constructor (nombre y símbolo del NFT).    
     constructor() ERC721("CryptoCampo NFT", "CCNFT") {
         // Inicialización de direcciones
-        fundsToken = IERC20(0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7); // Dirección del contrato BUSD en Testnet.
+        fundsToken = IERC20(address(0)); // Dirección inicial del token ERC20 de fondos.
         fundsCollector = address(0); // Dirección inicial del colector de fondos.
         feesCollector = address(0); // Dirección inicial del colector de tarifas.
 
@@ -102,7 +102,6 @@ contract CCNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
         profitToPay = 500; // Porcentaje inicial de beneficio a pagar en reclamaciones (5%).
                 
         tokenIdTracker.reset(); // Inicialización del contador de IDs de NFTs.
-        tokenIdTracker.increment(); // Iniciamos el contador en 1 (los IDs de los NFTs comienzan desde 1).
     }
 
     // PUBLIC FUNCTIONS
